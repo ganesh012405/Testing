@@ -13,7 +13,7 @@ module.exports = defineConfig({
   outputDir: 'test-results',
   use: {
     browserName: 'chromium',
-    channel: 'msedge',
+    channel: process.env.CI ? undefined : 'msedge',
     headless: true,
     screenshot: 'on',
     video: 'on',

@@ -1,6 +1,8 @@
 const { test, expect } = require('@playwright/test');
+const path = require('path');
+const { pathToFileURL } = require('url');
 
-const DASHBOARD_URL = 'file:///C:/workspace/Training/dashboard/index.html';
+const DASHBOARD_URL = pathToFileURL(path.resolve(__dirname, '../dashboard/index.html')).href;
 
 test.describe('FleetPulse dashboard - 20 test cases', () => {
   test.beforeEach(async ({ page }) => {
