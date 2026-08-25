@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FleetPulse — Vehicle Telemetry Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/charts.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════════ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <span class="brand-name">FleetPulse</span>
+    </div>
+
+    <div class="header-status" id="headerStatus">
+      <!-- Populated by fleet.js -->
+    </div>
+
+    <div class="header-right">
+      <time class="header-clock" id="headerClock" aria-live="polite">--:--:-- UTC</time>
+      <button class="alert-bell" id="alertBellBtn" aria-label="Open alerts">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="alert-badge" id="alertBadge" aria-label="unread alerts">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN WORKSPACE
+  ════════════════════════════════════════════════ -->
+  <main class="app-workspace">
+
+    <!-- ── LEFT: Fleet Sidebar ─────────────────── -->
+    <aside class="fleet-sidebar" aria-label="Fleet list">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Fleet</h2>
+        <div class="fleet-filter-tabs" role="tablist" aria-label="Filter vehicles by status">
+          <button class="tab-btn active" role="tab" aria-selected="true" data-filter="all">All</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-filter="online">Online</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-filter="warning">Warning</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-filter="offline">Offline</button>
+        </div>
+      </div>
+
+      <div class="fleet-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+          <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input
+          type="search"
+          id="fleetSearch"
+          class="search-input"
+          placeholder="Search vehicle or driver…"
+          aria-label="Search vehicles"
+        />
+      </div>
+
+      <ul class="fleet-list" id="fleetList" role="list" aria-label="Vehicle list">
+        <!-- Populated by fleet.js -->
+      </ul>
+    </aside>
+
+    <!-- ── CENTER: Map + KPI Bar ──────────────── -->
+    <section class="map-section" aria-label="Vehicle map">
+      <div class="map-container">
+        <div id="map" aria-label="Interactive fleet map"></div>
+        <button class="map-fit-btn" id="mapFitBtn" aria-label="Fit all vehicles in view">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 3h6M3 3v6M21 3h-6M21 3v6M3 21h6M3 21v-6M21 21h-6M21 21v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- KPI Metrics Bar -->
+      <div class="kpi-bar" role="region" aria-label="Fleet key performance indicators">
+        <div class="kpi-card">
+          <span class="kpi-label">Active Vehicles</span>
+          <span class="kpi-value" id="kpiActive">— / —</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Avg Fleet Speed</span>
+          <span class="kpi-value" id="kpiAvgSpeed">— km/h</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Active Alerts</span>
+          <span class="kpi-value kpi-value--alert" id="kpiAlerts">—</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Distance Today</span>
+          <span class="kpi-value" id="kpiDistance">— km</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RIGHT: Telemetry Detail Panel ─────── -->
+    <aside class="telemetry-panel" id="telemetryPanel" aria-label="Vehicle telemetry detail">
+      <!-- Empty state -->
+      <div class="telemetry-empty" id="telemetryEmpty">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p>Select a vehicle to view telemetry</p>
+      </div>
+
+      <!-- Detail content (hidden until vehicle selected) -->
+      <div class="telemetry-content" id="telemetryContent" hidden>
+
+        <!-- Vehicle identity -->
+        <div class="vehicle-identity" id="vehicleIdentity">
+          <div class="vehicle-identity-row">
+            <div>
+              <h3 class="vehicle-name" id="vehicleName">—</h3>
+              <span class="vehicle-driver" id="vehicleDriver">—</span>
+            </div>
+            <span class="status-badge" id="vehicleStatusBadge">—</span>
+          </div>
+          <span class="vehicle-updated" id="vehicleUpdated">Updated —</span>
+        </div>
+
+        <!-- Gauges -->
+        <div class="gauges-grid" role="region" aria-label="Telemetry gauges">
+          <div class="gauge-card" id="gaugeSpeed">
+            <canvas class="gauge-canvas" id="canvasSpeed" width="120" height="80" aria-label="Speed gauge"></canvas>
+            <span class="gauge-value" id="gaugeValueSpeed">—</span>
+            <span class="gauge-label">Speed km/h</span>
+          </div>
+          <div class="gauge-card" id="gaugeTemp">
+            <canvas class="gauge-canvas" id="canvasTemp" width="120" height="80" aria-label="Temperature gauge"></canvas>
+            <span class="gauge-value" id="gaugeValueTemp">—</span>
+            <span class="gauge-label">Temp °C</span>
+          </div>
+          <div class="gauge-card" id="gaugeBattery">
+            <canvas class="gauge-canvas" id="canvasBattery" width="120" height="80" aria-label="Battery gauge"></canvas>
+            <span class="gauge-value" id="gaugeValueBattery">—</span>
+            <span class="gauge-label">Battery %</span>
+          </div>
+          <div class="gauge-card" id="gaugeFuel">
+            <canvas class="gauge-canvas" id="canvasFuel" width="120" height="80" aria-label="Fuel gauge"></canvas>
+            <span class="gauge-value" id="gaugeValueFuel">—</span>
+            <span class="gauge-label">Fuel %</span>
+          </div>
+        </div>
+
+        <!-- Trend Charts -->
+        <div class="chart-section">
+          <h4 class="chart-section-title">Speed Trend</h4>
+          <div class="chart-wrapper">
+            <canvas id="chartSpeed" aria-label="Speed over time chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h4 class="chart-section-title">Temperature Trend</h4>
+          <div class="chart-wrapper">
+            <canvas id="chartTemp" aria-label="Temperature over time chart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h4 class="chart-section-title">Battery &amp; Fuel</h4>
+          <div class="chart-wrapper">
+            <canvas id="chartBatteryFuel" aria-label="Battery and fuel over time chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Vehicle Details Table -->
+        <div class="details-table-section">
+          <h4 class="chart-section-title">Vehicle Details</h4>
+          <table class="details-table" aria-label="Vehicle details">
+            <tbody>
+              <tr><th scope="row">Odometer</th><td id="detailOdometer">—</td></tr>
+              <tr><th scope="row">RPM</th><td id="detailRpm">—</td></tr>
+              <tr><th scope="row">Heading</th><td id="detailHeading">—</td></tr>
+              <tr><th scope="row">Coordinates</th><td id="detailCoords">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════
+       ALERT FEED (bottom strip)
+  ════════════════════════════════════════════════ -->
+  <footer class="alert-feed-bar" role="region" aria-label="Alert feed" aria-live="polite">
+    <span class="alert-feed-label">Alerts</span>
+    <div class="alert-feed-scroll" id="alertFeed">
+      <!-- Populated by alerts.js -->
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════
+       SCRIPTS (order matters — no bundler)
+  ════════════════════════════════════════════════ -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <script src="js/data/mockData.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/fleet.js"></script>
+  <script src="js/telemetry.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+/* ─────────────────────────────────────────────
+   layout.css — Full page grid & responsive layout
+───────────────────────────────────────────── */
+
+/* ── Root ──────────────────────────────────── */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+}
+
+/* ── App shell ─────────────────────────────── */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-5);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-workspace {
+  position: fixed;
+  top: var(--header-height);
+  bottom: var(--alert-bar-height);
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--telemetry-width);
+  grid-template-rows: 1fr;
+  overflow: hidden;
+}
+
+.alert-feed-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--alert-bar-height);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-5);
+  background: var(--color-bg-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Header internals ──────────────────────── */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  justify-content: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+/* ── Sidebar: Fleet ────────────────────────── */
+.fleet-sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-surface);
+  border-right: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.fleet-search {
+  position: relative;
+  padding: var(--space-3) var(--space-5);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.fleet-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+}
+
+/* ── Center: Map ───────────────────────────── */
+.map-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Right: Telemetry panel ────────────────── */
+.telemetry-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-surface);
+  border-left: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.telemetry-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ── KPI Bar ───────────────────────────────── */
+.kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--color-border);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* ── Responsive: Tablet (768–1279px) ───────── */
+@media (max-width: 1279px) {
+  .app-workspace {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .telemetry-panel {
+    position: fixed;
+    top: var(--header-height);
+    bottom: var(--alert-bar-height);
+    right: 0;
+    width: var(--telemetry-width);
+    transform: translateX(100%);
+    transition: transform var(--transition-base);
+    z-index: 100;
+    box-shadow: var(--shadow-popup);
+  }
+
+  .telemetry-panel.is-open {
+    transform: translateX(0);
+  }
+}
+
+/* ── Responsive: Mobile (<768px) ───────────── */
+@media (max-width: 767px) {
+  html, body {
+    overflow: auto;
+  }
+
+  .app-workspace {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .fleet-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    max-height: 300px;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+
+  .kpi-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .telemetry-panel {
+    position: static;
+    transform: none;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+  }
+}
